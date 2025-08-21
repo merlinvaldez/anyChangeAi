@@ -6,7 +6,7 @@ export async function GET() {
     // Check if critical environment variables are loaded
     const requiredEnvVars = [
       "API_SECRET_KEY",
-      "OCR_PROVIDER", 
+      "OCR_PROVIDER",
       "MISTRAL_API_KEY",
     ];
 
@@ -35,14 +35,15 @@ export async function GET() {
     });
   } catch (error) {
     // If something goes wrong, return an error with details
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
     return Response.json(
-      { 
-        status: 'error', 
-        message: 'Health check failed',
+      {
+        status: "error",
+        message: "Health check failed",
         error: errorMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );
