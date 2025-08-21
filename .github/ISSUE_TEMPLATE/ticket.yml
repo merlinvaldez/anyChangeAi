@@ -1,0 +1,61 @@
+name: Ticket
+description: Standard engineering ticket for this project
+title: "[A]: <short title>"
+labels:
+  - ticket
+body:
+  - type: input
+    id: component
+    attributes:
+      label: Component/Area
+      placeholder: e.g., Setup, CI, Env, Deploy, Editor
+  - type: input
+    id: epic
+    attributes:
+      label: Epic
+      placeholder: EPIC A — Project Setup & CI
+    validations:
+      required: true
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story
+      description: As a <role>, I want <capability> so that <benefit>.
+      placeholder: As a developer, I want ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list of pass/fail criteria.
+      placeholder: |
+        - When I run X, I see Y
+        - Command Z exits 0
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: Step-by-step checklist.
+      placeholder: |
+        - [ ] Task 1
+        - [ ] Task 2
+    validations:
+      required: true
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      placeholder: e.g., A1-2 must precede this
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimate
+      placeholder: e.g., 1h
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes/Links
+      placeholder: Docs, references, examples
