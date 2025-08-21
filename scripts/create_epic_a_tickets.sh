@@ -61,8 +61,7 @@ create_issue() {
 }
 
 # Define issues (title | labels | body)
-read -r -d '' A1_1 <<'EOF'
-User Story: As a developer, I want a clean repo so I can collaborate and track changes.
+A1_1="User Story: As a developer, I want a clean repo so I can collaborate and track changes.
 Acceptance Criteria:
 - Repo initialized with README, LICENSE (MIT), and .gitignore (Node/Next)
 - First commit pushed
@@ -70,8 +69,7 @@ Tasks:
 - [ ] git init, add README, LICENSE, .gitignore
 - [ ] Initial commit and push to GitHub
 Dependencies: None
-Estimate: 0.5h
-EOF
+Estimate: 0.5h"
 
 read -r -d '' A1_2 <<'EOF'
 User Story: As a developer, I want a Next.js app scaffold so I can build the UI.
