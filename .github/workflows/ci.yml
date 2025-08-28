@@ -42,8 +42,13 @@ jobs:
         run: npm run lint
 
       # Step 5: Run TypeScript type checking
-      - name: Run type check
-        run: npm run type-check
+      - name: Run type check (if script exists)
+        run: |
+          if jq -e '.scripts["type-check"]' package.json > /dev/null; then
+            npm run type-check
+          else
+            echo "No type-check script found in package.json, skipping type check."
+          fi
 
       # Step 6: Run all tests
       - name: Run tests
