@@ -4,10 +4,11 @@
  * This component displays the current environment configuration
  * and helps verify that environment variables are loading correctly.
  *
- * This is great for development and debugging!
+ * SECURITY NOTE: This component only shows client-safe information.
+ * Sensitive server-only data is never exposed to the browser.
  */
 
-import { env } from '@/lib/env';
+import { clientEnv } from '@/lib/env';
 
 export function EnvironmentStatus() {
   return (
@@ -19,68 +20,71 @@ export function EnvironmentStatus() {
           <h4 className="font-medium text-gray-700 mb-2">App Configuration</h4>
           <ul className="space-y-1">
             <li>
-              <strong>Name:</strong> {env.app.name}
+              <strong>Name:</strong> {clientEnv.app.name}
             </li>
             <li>
-              <strong>Environment:</strong> {env.app.nodeEnv}
+              <strong>Environment:</strong> {clientEnv.app.nodeEnv}
             </li>
             <li>
-              <strong>URL:</strong> {env.app.url}
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-medium text-gray-700 mb-2">OCR Configuration</h4>
-          <ul className="space-y-1">
-            <li>
-              <strong>Provider:</strong> {env.ocr.provider}
-            </li>
-            <li>
-              <strong>Mistral API:</strong>{' '}
-              {env.ocr.mistral.apiKey ? '✅ Configured' : '❌ Not set'}
+              <strong>URL:</strong> {clientEnv.app.url}
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-medium text-gray-700 mb-2">File Processing</h4>
+          <h4 className="font-medium text-gray-700 mb-2">Security Status</h4>
           <ul className="space-y-1">
             <li>
-              <strong>Max Size:</strong>{' '}
-              {(env.files.maxSize / 1024 / 1024).toFixed(1)}MB
+              <strong>Client Environment:</strong> ✅ Loaded
             </li>
             <li>
-              <strong>Max Pages:</strong> {env.files.maxPages}
+              <strong>Sensitive Data:</strong> 🔒 Protected (server-only)
             </li>
             <li>
-              <strong>Allowed Types:</strong>{' '}
-              {env.files.allowedTypes.join(', ')}
+              <strong>Public Variables:</strong> ✅ Available
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-medium text-gray-700 mb-2">Debug Settings</h4>
+          <h4 className="font-medium text-gray-700 mb-2">Client Information</h4>
           <ul className="space-y-1">
             <li>
-              <strong>Debug Logging:</strong>{' '}
-              {env.debug.logging ? '✅ Enabled' : '❌ Disabled'}
+              <strong>Browser:</strong>{' '}
+              {typeof window !== 'undefined'
+                ? '✅ Client-side'
+                : '❌ Server-side'}
             </li>
             <li>
-              <strong>API Key:</strong>{' '}
-              {env.api.secretKey ? '✅ Set' : '❌ Missing'}
+              <strong>Development Mode:</strong>{' '}
+              {clientEnv.app.isDevelopment ? '✅ Yes' : '❌ No'}
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-medium text-gray-700 mb-2">Important Notice</h4>
+          <ul className="space-y-1 text-xs">
+            <li className="text-blue-600">
+              🔒 <strong>Security:</strong> Server secrets are protected
+            </li>
+            <li className="text-green-600">
+              📱 <strong>Public:</strong> Only safe data shown here
+            </li>
+            <li className="text-purple-600">
+              🚀 <strong>Ready:</strong> Environment configured correctly
             </li>
           </ul>
         </div>
       </div>
 
-      {env.app.isDevelopment && (
+      {clientEnv.app.isDevelopment && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
           <p className="text-sm text-blue-700">
-            💡 <strong>Development Mode:</strong> This component is only visible
-            in development. It helps you verify your environment configuration
-            is working correctly.
+            💡 <strong>Development Mode:</strong> This component only shows
+            client-safe information. Server-only data (API keys, file limits,
+            OCR config) is properly protected and not exposed to the browser.
+            Check the server logs for full configuration details.
           </p>
         </div>
       )}

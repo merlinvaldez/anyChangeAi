@@ -1,29 +1,18 @@
 // Health Check API Route
 // This is like a "ping" endpoint that confirms our app is working
 
+import { serverEnv } from '@/lib/env';
+
 export async function GET() {
   try {
-    // Check if critical environment variables are loaded
-    const requiredEnvVars = [
-      'API_SECRET_KEY',
-      'OCR_PROVIDER',
-      'MISTRAL_API_KEY',
-    ];
-
-    const missingVars = requiredEnvVars.filter(
-      varName => !process.env[varName]
-    );
-
-    if (missingVars.length > 0) {
-      throw new Error(
-        `Missing environment variables: ${missingVars.join(', ')}`
-      );
-    }
+    // Use serverEnv to access environment configuration securely
+    // This automatically validates all environment variables
+    const env = serverEnv;
 
     // Basic app status checks
     const appStatus = {
-      environment: process.env.NODE_ENV || 'development',
-      ocrProvider: process.env.OCR_PROVIDER,
+      environment: env.app.nodeEnv,
+      ocrProvider: env.ocr.provider,
       timestamp: new Date().toISOString(),
     };
 
