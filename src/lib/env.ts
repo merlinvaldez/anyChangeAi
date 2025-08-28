@@ -1,149 +1,204 @@
 /**
- * Environment Configuration
+ * Environment Configuration with Zod Validation
  *
- * This file centralizes all environment variable access and provides
- * type safety and validation for your environment variables.
+ * This file centralizes all environment variable acce      error.issues.forEach((err: z.ZodIssue) => {
+        const field = err.path.join('.');
+        console.error(`  • ${field}: ${err.message}`);
+      });nd provides
+ * type safety and validation using Zod schemas.
  *
- * Why do this?
+ * Why use Zod for environment variables?
  * 1. Type safety - catch missing env vars at build time
- * 2. Documentation - clear list of what your app needs
- * 3. Validation - ensure required values are present
+ * 2. Schema validation - ensure correct data types and formats
+ * 3. Clear error messages - know exactly what's wrong
  * 4. Default values - provide sensible fallbacks
+ * 5. Documentation - schema serves as living documentation
  */
 
-// Helper function to get environment variables with validation
-function getEnvVar(name: string, defaultValue?: string): string {
-  const value = process.env[name] || defaultValue;
-
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${name}\n` +
-        `Please check your .env.local file and ensure ${name} is set.`
-    );
-  }
-
-  return value;
-}
-
-// Helper function for optional environment variables
-function getOptionalEnvVar(name: string, defaultValue: string = ''): string {
-  return process.env[name] || defaultValue;
-}
-
-// Helper function for numeric environment variables
-function getNumericEnvVar(name: string, defaultValue: number): number {
-  const value = process.env[name];
-  if (!value) return defaultValue;
-
-  const trimmed = value.trim();
-  const num = Number(trimmed);
-  if (
-    trimmed === '' ||
-    isNaN(num)
-  ) {
-    throw new Error(
-      `Environment variable ${name} must be a valid number, got: ${value}`
-    );
-  }
-
-  return num;
-function getBooleanEnvVar(
-  name: string,
-  defaultValue: boolean = false
-): boolean {
-  const value = process.env[name];
-  if (!value) return defaultValue;
-
-  return value.toLowerCase() === 'true';
-}
+import { z } from 'zod';
 
 // =============================================================================
-// ENVIRONMENT CONFIGURATION
+// SCHEMA DEFINITIONS
+// =============================================================================
+
+/**
+ * Transform string to boolean for environment variables
+ * Accepts: 'true', 'false', '1', '0', undefined
+ */
+const booleanSchema = z
+  .string()
+  .optional()
+  .transform(val => val === 'true' || val === '1')
+  .default(false);
+
+/**
+ * Transform string to number for environment variables
+ * Provides a default value if not set
+ */
+const numberSchema = (defaultValue: number) =>
+  z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val, 10) : defaultValue))
+    .refine(val => !isNaN(val), { message: 'Must be a valid number' });
+
+/**
+ * Transform comma-separated string to array
+ */
+const csvSchema = (defaultValue: string) =>
+  z
+    .string()
+    .default(defaultValue)
+    .transform(val => val.split(',').map(item => item.trim()));
+
+// =============================================================================
+// MAIN ENVIRONMENT SCHEMA
+// =============================================================================
+
+const envSchema = z.object({
+  // Node.js environment
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
+
+  // App configuration (public)
+  NEXT_PUBLIC_APP_NAME: z.string().default('AnyChange AI'),
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+
+  // API Security (server-only)
+  API_SECRET_KEY: z.string().min(1, 'API_SECRET_KEY is required for security'),
+
+  // OCR Configuration
+  OCR_PROVIDER: z.enum(['tesseract', 'mistral']).default('tesseract'),
+  MISTRAL_API_KEY: z.string().optional(),
+  MISTRAL_API_URL: z.string().url().default('https://api.mistral.ai/v1'),
+
+  // File Processing
+  MAX_FILE_SIZE: numberSchema(10485760), // 10MB default
+  MAX_PAGES: numberSchema(10),
+  ALLOWED_FILE_TYPES: csvSchema('pdf,jpg,jpeg,png'),
+
+  // Development Settings
+  DEBUG_LOGGING: booleanSchema,
+
+  // Optional: Future features
+  AWS_REGION: z.string().optional(),
+  AWS_S3_BUCKET: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
+});
+
+// =============================================================================
+// VALIDATION LOGIC
+// =============================================================================
+
+// =============================================================================
+// VALIDATION LOGIC
+// =============================================================================
+
+/**
+ * Parse and validate environment variables using Zod
+ * This will throw helpful errors if any required variables are missing
+ */
+function parseEnvironment() {
+  try {
+    return envSchema.parse(process.env);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('❌ Environment Configuration Error:');
+      console.error(
+        'The following environment variables are invalid or missing:\n'
+      );
+
+      error.issues.forEach((err: z.ZodIssue) => {
+        const field = err.path.join('.');
+        console.error(`  • ${field}: ${err.message}`);
+      });
+
+      console.error('\n💡 Quick fix:');
+      console.error('  1. Check your .env.local file exists');
+      console.error('  2. Copy missing variables from .env.example');
+      console.error('  3. Restart your development server\n');
+    }
+
+    throw error;
+  }
+}
+
+// Parse environment variables and make them available
+const rawEnv = parseEnvironment();
+
+// =============================================================================
+// TYPED ENVIRONMENT OBJECT
 // =============================================================================
 
 export const env = {
   // App Configuration
   app: {
-    name: getEnvVar('NEXT_PUBLIC_APP_NAME', 'AnyChange AI'),
-    url: getEnvVar('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
-    nodeEnv: getEnvVar('NODE_ENV', 'development'),
-    isDevelopment: getEnvVar('NODE_ENV', 'development') === 'development',
-    isProduction: getEnvVar('NODE_ENV', 'development') === 'production',
+    name: rawEnv.NEXT_PUBLIC_APP_NAME,
+    url: rawEnv.NEXT_PUBLIC_APP_URL,
+    nodeEnv: rawEnv.NODE_ENV,
+    isDevelopment: rawEnv.NODE_ENV === 'development',
+    isProduction: rawEnv.NODE_ENV === 'production',
   },
 
   // API Security
   api: {
-    secretKey: getEnvVar('API_SECRET_KEY'),
+    secretKey: rawEnv.API_SECRET_KEY,
   },
 
   // OCR Configuration
   ocr: {
-    provider: getEnvVar('OCR_PROVIDER', 'tesseract') as 'tesseract' | 'mistral',
+    provider: rawEnv.OCR_PROVIDER,
     mistral: {
-      apiKey: getOptionalEnvVar('MISTRAL_API_KEY'),
-      apiUrl: getOptionalEnvVar('MISTRAL_API_URL', 'https://api.mistral.ai/v1'),
+      apiKey: rawEnv.MISTRAL_API_KEY,
+      apiUrl: rawEnv.MISTRAL_API_URL,
     },
   },
 
   // File Processing
   files: {
-    maxSize: getNumericEnvVar('MAX_FILE_SIZE', 10485760), // 10MB default
-    maxPages: getNumericEnvVar('MAX_PAGES', 10),
-    allowedTypes: getOptionalEnvVar('ALLOWED_FILE_TYPES', 'pdf,jpg,jpeg,png')
-      .split(',')
-      .map(type => type.trim()),
+    maxSize: rawEnv.MAX_FILE_SIZE,
+    maxPages: rawEnv.MAX_PAGES,
+    allowedTypes: rawEnv.ALLOWED_FILE_TYPES,
   },
 
   // Development Settings
   debug: {
-    logging: getBooleanEnvVar('DEBUG_LOGGING', true),
+    logging: rawEnv.DEBUG_LOGGING,
   },
 
   // Future features (optional)
   aws: {
-    region: getOptionalEnvVar('AWS_REGION'),
-    s3Bucket: getOptionalEnvVar('AWS_S3_BUCKET'),
-    accessKeyId: getOptionalEnvVar('AWS_ACCESS_KEY_ID'),
-    secretAccessKey: getOptionalEnvVar('AWS_SECRET_ACCESS_KEY'),
+    region: rawEnv.AWS_REGION,
+    s3Bucket: rawEnv.AWS_S3_BUCKET,
+    accessKeyId: rawEnv.AWS_ACCESS_KEY_ID,
+    secretAccessKey: rawEnv.AWS_SECRET_ACCESS_KEY,
   },
 
   database: {
-    url: getOptionalEnvVar('DATABASE_URL'),
+    url: rawEnv.DATABASE_URL,
   },
 } as const;
 
 // =============================================================================
-// VALIDATION
+// ADDITIONAL VALIDATION
 // =============================================================================
 
 /**
- * Validates that all required environment variables are present
+ * Validates business logic rules for environment configuration
  * Call this at app startup to catch configuration issues early
  */
 export function validateEnvironment(): void {
   console.log('🔍 Validating environment configuration...');
 
   try {
-    // Test that all required env vars are accessible
-    if (!env.app.name) {
-      throw new Error('Missing required environment variable: APP_NAME');
-    }
-    if (!env.api.secretKey) {
-      throw new Error('Missing required environment variable: API_SECRET_KEY');
-    }
-    if (!env.ocr.provider) {
-      throw new Error('Missing required environment variable: OCR_PROVIDER');
-    }
-
-    // Validate OCR provider choice
-    if (!['tesseract', 'mistral'].includes(env.ocr.provider)) {
-      throw new Error(
-        `Invalid OCR_PROVIDER: ${env.ocr.provider}. Must be 'tesseract' or 'mistral'`
-      );
-    }
-
-    // If using Mistral, ensure API key is present
-    if (env.ocr.provider === 'mistral' && !env.ocr.mistral.apiKey) {
+    // Additional business logic validation
+    if (
+      env.ocr.provider === 'mistral' &&
+      (!env.ocr.mistral.apiKey || env.ocr.mistral.apiKey.trim() === '')
+    ) {
       throw new Error(
         'MISTRAL_API_KEY is required when OCR_PROVIDER is set to "mistral"'
       );
