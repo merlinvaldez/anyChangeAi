@@ -56,4 +56,9 @@ jobs:
 
       # Step 7: Run tests with coverage (optional, for reporting)
       - name: Run test coverage
-        run: npm run test:coverage
+        run: |
+          if npm run | grep -q "test:coverage"; then
+            npm run test:coverage
+          else
+            echo "Skipping test:coverage: no such script in package.json"
+          fi
