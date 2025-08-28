@@ -35,7 +35,7 @@ function getNumericEnvVar(name: string, defaultValue: number): number {
   const value = process.env[name];
   if (!value) return defaultValue;
 
-  const parsed = parseInt(value, 10);
+  const parsed = parseFloat(value);
   if (isNaN(parsed)) {
     throw new Error(
       `Environment variable ${name} must be a valid number, got: ${value}`
