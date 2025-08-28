@@ -36,16 +36,17 @@ function getNumericEnvVar(name: string, defaultValue: number): number {
   if (!value) return defaultValue;
 
   const trimmed = value.trim();
-  if (trimmed === '' || isNaN(Number(trimmed))) {
+  const num = Number(trimmed);
+  if (
+    trimmed === '' ||
+    isNaN(num)
+  ) {
     throw new Error(
       `Environment variable ${name} must be a valid number, got: ${value}`
     );
   }
 
-  return Number(trimmed);
-}
-
-// Helper function for boolean environment variables
+  return num;
 function getBooleanEnvVar(
   name: string,
   defaultValue: boolean = false
