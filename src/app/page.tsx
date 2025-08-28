@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
@@ -41,7 +39,7 @@ export default function Home() {
           <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Convert Documents to
             <span className="text-blue-600 dark:text-blue-400">
-              {" "}
+              {' '}
               Editable Text
             </span>
           </h2>

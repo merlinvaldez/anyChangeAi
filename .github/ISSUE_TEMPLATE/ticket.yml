@@ -1,6 +1,6 @@
 name: Ticket
 description: Standard engineering ticket for this project
-title: "[A]: <short title>"
+title: '[A]: <short title>'
 labels:
   - ticket
 body:
