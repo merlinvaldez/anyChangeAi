@@ -127,9 +127,15 @@ export function validateEnvironment(): void {
 
   try {
     // Test that all required env vars are accessible
-    env.app.name;
-    env.api.secretKey;
-    env.ocr.provider;
+    if (!env.app.name) {
+      throw new Error('Missing required environment variable: APP_NAME');
+    }
+    if (!env.api.secretKey) {
+      throw new Error('Missing required environment variable: API_SECRET_KEY');
+    }
+    if (!env.ocr.provider) {
+      throw new Error('Missing required environment variable: OCR_PROVIDER');
+    }
 
     // Validate OCR provider choice
     if (!['tesseract', 'mistral'].includes(env.ocr.provider)) {
