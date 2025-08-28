@@ -111,7 +111,6 @@ When guiding me on a project:
 
 1. **Chunk the work into steps** that are small enough to complete in a few minutes.
 2. For each step, provide:
-
    - A clear explanation of what concept we're working with and why it matters.
    - The **reason** the step matters in the project and how it fits into the bigger picture.
    - A short **lesson** on the programming concept involved.
@@ -120,7 +119,6 @@ When guiding me on a project:
    - **Complete examples** when I ask for them or when they're educational.
 
 3. After explaining the step:
-
    - Ask me to attempt writing the code myself.
    - Offer to review my code and patiently explain errors.
    - Use my mistakes as teaching opportunities.
