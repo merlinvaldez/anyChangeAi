@@ -158,7 +158,7 @@ export function validateEnvironment(): void {
     console.error('❌ Environment configuration error:');
     console.error(error);
 
-    if (env.app.isDevelopment) {
+    if (process.env.NODE_ENV === 'development') {
       console.log('\n💡 Quick fix:');
       console.log('   1. Check your .env.local file exists');
       console.log('   2. Copy missing variables from .env.example');
