@@ -1,0 +1,54 @@
+# CI Workflow for AnyChange AI
+# This workflow runs automatically on every pull request and push to main
+# It ensures code quality by running linting, type checking, and tests
+
+name: CI
+
+# When should this workflow run?
+on:
+  # Run on pull requests to any branch
+  pull_request:
+  # Run on pushes to main branch
+  push:
+    branches: [main]
+
+# What jobs should run?
+jobs:
+  # Job name: test-and-lint
+  test-and-lint:
+    # What operating system should this run on?
+    runs-on: ubuntu-latest
+
+    # What steps should this job execute?
+    steps:
+      # Step 1: Get the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Cache npm dependencies for faster builds
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run linting to check code style
+      - name: Run linter
+        run: npm run lint
+
+      # Step 5: Run TypeScript type checking
+      - name: Run type check
+        run: npm run type-check
+
+      # Step 6: Run all tests
+      - name: Run tests
+        run: npm run test
+
+      # Step 7: Run tests with coverage (optional, for reporting)
+      - name: Run test coverage
+        run: npm run test:coverage
