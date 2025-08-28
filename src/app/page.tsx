@@ -122,7 +122,7 @@ export default function Home() {
 
         {/* Environment Status (Development Only) */}
         <div className="max-w-4xl mx-auto mt-16">
-          <EnvironmentStatus />
+          {process.env.NODE_ENV === 'development' && <EnvironmentStatus />}
         </div>
       </main>
 
