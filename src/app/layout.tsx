@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { env, validateEnvironment } from '@/lib/env';
+import { serverEnv, validateEnvironment } from '@/lib/env';
 
 // Validate environment at app startup
 validateEnvironment();
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: env.app.name,
+  title: serverEnv.app.name,
   description:
     'Convert documents to editable text using AI-powered OCR technology',
 };
