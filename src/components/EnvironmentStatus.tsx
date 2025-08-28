@@ -10,6 +10,7 @@
 import { env } from '@/lib/env';
 
 export function EnvironmentStatus() {
+  if (!env.app.isDevelopment) return null;
   return (
     <div className="bg-gray-100 border rounded-lg p-4 my-4">
       <h3 className="font-semibold text-lg mb-3">🔧 Environment Status</h3>
