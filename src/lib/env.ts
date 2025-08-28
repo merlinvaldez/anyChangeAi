@@ -11,6 +11,9 @@
  * 4. Default values - provide sensible fallbacks
  */
 
+// Define valid OCR provider types
+type OcrProvider = 'tesseract' | 'mistral';
+
 // Helper function to get environment variables with validation
 function getEnvVar(name: string, defaultValue?: string): string {
   const value = process.env[name] || defaultValue;
@@ -28,6 +31,19 @@ function getEnvVar(name: string, defaultValue?: string): string {
 // Helper function for optional environment variables
 function getOptionalEnvVar(name: string, defaultValue: string = ''): string {
   return process.env[name] || defaultValue;
+}
+
+// Helper function to validate and return OCR provider type
+function getOcrProvider(name: string, defaultValue: OcrProvider): OcrProvider {
+  const value = getEnvVar(name, defaultValue);
+
+  if (value !== 'tesseract' && value !== 'mistral') {
+    throw new Error(
+      `Invalid OCR_PROVIDER: ${value}. Must be 'tesseract' or 'mistral'`
+    );
+  }
+
+  return value as OcrProvider;
 }
 
 // Helper function for numeric environment variables
@@ -77,7 +93,7 @@ export const env = {
 
   // OCR Configuration
   ocr: {
-    provider: getEnvVar('OCR_PROVIDER', 'tesseract') as 'tesseract' | 'mistral',
+    provider: getOcrProvider('OCR_PROVIDER', 'tesseract'),
     mistral: {
       apiKey: getOptionalEnvVar('MISTRAL_API_KEY'),
       apiUrl: getOptionalEnvVar('MISTRAL_API_URL', 'https://api.mistral.ai/v1'),
@@ -134,12 +150,7 @@ export function validateEnvironment(): void {
       throw new Error('Missing required environment variable: OCR_PROVIDER');
     }
 
-    // Validate OCR provider choice
-    if (!['tesseract', 'mistral'].includes(env.ocr.provider)) {
-      throw new Error(
-        `Invalid OCR_PROVIDER: ${env.ocr.provider}. Must be 'tesseract' or 'mistral'`
-      );
-    }
+    // OCR provider validation is now handled by getOcrProvider() at configuration time
 
     // If using Mistral, ensure API key is present
     if (env.ocr.provider === 'mistral' && !env.ocr.mistral.apiKey) {
@@ -176,5 +187,5 @@ export function validateEnvironment(): void {
 }
 
 // Export types for use in other files
-export type OcrProvider = typeof env.ocr.provider;
+export type { OcrProvider };
 export type EnvironmentConfig = typeof env;
