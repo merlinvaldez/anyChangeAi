@@ -36,7 +36,11 @@ function getNumericEnvVar(name: string, defaultValue: number): number {
   if (!value) return defaultValue;
 
   const trimmed = value.trim();
-  if (trimmed === '' || isNaN(Number(trimmed)) || !/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(trimmed)) {
+  if (
+    trimmed === '' ||
+    isNaN(Number(trimmed)) ||
+    !/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(trimmed)
+  ) {
     throw new Error(
       `Environment variable ${name} must be a valid number, got: ${value}`
     );
