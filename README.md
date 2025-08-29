@@ -139,6 +139,117 @@ When deploying, make sure to set these environment variables in your hosting pla
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on every push to main branch
 
+## ✅ Deployment Verification
+
+Use this checklist to verify your deployment is working correctly. Run these tests after every deployment to catch issues early.
+
+### 📋 Quick Smoke Tests
+
+**Automated Testing**: Use our verification scripts to run all tests at once:
+
+```bash
+# Test local development (Node.js - cross-platform)
+npm run verify:local
+
+# Test local development (Bash - Linux/Mac/WSL)
+npm run verify:bash
+
+# Test deployed app (replace with your URL)
+node scripts/verify-deployment.mjs https://your-app-name.vercel.app
+```
+
+**Note**: If automated scripts fail locally but the app works in browser, this may be due to firewall settings. The manual tests below will work in any case.
+
+**Manual Testing**: Run individual tests below:
+
+#### 1. Health Check (/api/health)
+
+```bash
+# Test the basic health endpoint
+curl https://your-app-url.vercel.app/api/health
+
+# Expected response:
+# {
+#   "status": "ok",
+#   "message": "AnyChange AI is healthy",
+#   "timestamp": "2025-08-29T...",
+#   "environment": "production",
+#   "version": "0.1.0"
+# }
+```
+
+#### 2. API Status Check (/api/status)
+
+```bash
+# Test detailed API status
+curl https://your-app-url.vercel.app/api/status
+
+# Expected response includes:
+# - api.status: "operational"
+# - services.ocr.provider: "tesseract" or "mistral"
+# - services.ocr.status: "ready" or "configured"
+# - limits.maxFileSize, maxPages, allowedTypes
+```
+
+#### 3. Frontend Rendering
+
+**Manual Test**: Open your deployment URL in a browser and verify:
+
+- [ ] Homepage loads without errors
+- [ ] App title "AnyChange AI" appears in header
+- [ ] Main heading "Convert documents to editable text" is visible
+- [ ] Upload area displays with "Drop your document here" text
+- [ ] All navigation links (Features, Pricing, About) are present
+- [ ] Footer with copyright appears
+- [ ] No console errors in browser DevTools
+
+### 🌐 Deployment URLs
+
+Record your live URLs here for easy reference:
+
+- **Frontend (Vercel)**: `https://your-app-name.vercel.app`
+- **API Health Check**: `https://your-app-name.vercel.app/api/health`
+- **API Status**: `https://your-app-name.vercel.app/api/status`
+
+### 🚨 Troubleshooting Common Issues
+
+If any smoke tests fail, check these common issues:
+
+#### Health Check Returns 500 Error
+
+- [ ] Check environment variables are set correctly
+- [ ] Verify `API_SECRET_KEY` is configured
+- [ ] Check deployment logs for startup errors
+
+#### Status Endpoint Shows Service Issues
+
+- [ ] Verify `OCR_PROVIDER` is set to "tesseract" or "mistral"
+- [ ] If using Mistral: check `MISTRAL_API_KEY` is valid
+- [ ] Check `MAX_FILE_SIZE` and other limit variables are numbers
+
+#### Frontend Won't Load
+
+- [ ] Check if build completed successfully
+- [ ] Verify `NEXT_PUBLIC_APP_URL` matches your domain
+- [ ] Look for JavaScript errors in browser console
+- [ ] Check if static assets (CSS, images) are loading
+
+#### Environment Variable Issues
+
+- [ ] Ensure all required variables from `.env.example` are set
+- [ ] Public variables must be prefixed with `NEXT_PUBLIC_`
+- [ ] No spaces around `=` in environment variable definitions
+- [ ] Secret values don't contain special characters that need escaping
+
+### 📊 Performance Baselines
+
+After deployment, record these metrics for monitoring:
+
+- **First Load**: **\_** seconds
+- **Health Check Response**: **\_** ms
+- **Status Check Response**: **\_** ms
+- **OCR Test (small image)**: **\_** seconds
+
 ## 📚 Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
