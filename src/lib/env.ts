@@ -28,7 +28,7 @@ import { z } from 'zod';
  * Detect if we're running on server or client
  * This is crucial for preventing server-only variables from leaking to browser
  */
-const isServer = typeof window === 'undefined';
+const _isServer = typeof window === 'undefined';
 const isClient = typeof window !== 'undefined';
 
 // =============================================================================
