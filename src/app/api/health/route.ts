@@ -1,26 +1,36 @@
 // Health Check API Route
 // This is like a "ping" endpoint that confirms our app is working
 
-import { serverEnv } from '@/lib/env';
-
 export async function GET() {
   try {
-    // Use serverEnv to access environment configuration securely
-    // This automatically validates all environment variables
-    const env = serverEnv;
-
-    // Basic app status checks
-    const appStatus = {
-      environment: env.app.nodeEnv,
-      ocrProvider: env.ocr.provider,
-      timestamp: new Date().toISOString(),
-    };
-
-    // If we get here, everything is working!
-    return Response.json({
+    // Basic health check with safe environment information
+    const healthStatus = {
       status: 'ok',
       message: 'AnyChange AI is healthy',
-      ...appStatus,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'unknown',
+      version: '0.1.0',
+      uptime: process.uptime(),
+      service: 'anychange-ai-api',
+    };
+
+    // Add some basic system information
+    const systemInfo = {
+      platform: process.platform,
+      nodeVersion: process.version,
+      memory: {
+        used:
+          Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) /
+          100,
+        total:
+          Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) /
+          100,
+      },
+    };
+
+    return Response.json({
+      ...healthStatus,
+      system: systemInfo,
     });
   } catch (error) {
     // If something goes wrong, return an error with details
