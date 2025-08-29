@@ -1,4 +1,5 @@
 import { EnvironmentStatus } from '@/components/EnvironmentStatus';
+import { HealthStatus } from '@/components/HealthStatus';
 
 export default function Home() {
   return (
@@ -123,6 +124,7 @@ export default function Home() {
         {/* Environment Status (Development Only) */}
         <div className="max-w-4xl mx-auto mt-16">
           {process.env.NODE_ENV === 'development' && <EnvironmentStatus />}
+          <HealthStatus />
         </div>
       </main>
 
