@@ -20,6 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
     "dotenv": "^17.2.1",
     "next": "15.5.0",
     "react": "19.1.0",
