@@ -24,8 +24,10 @@ export async function GET() {
           status: env.database.url ? 'configured' : 'not-configured',
         },
         storage: {
-          aws: {
-            status: env.aws.s3Bucket ? 'configured' : 'not-configured',
+          supabase: {
+            status: env.supabase.storageBucket
+              ? 'configured'
+              : 'not-configured',
           },
         },
       },
