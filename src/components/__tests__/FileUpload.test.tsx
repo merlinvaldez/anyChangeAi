@@ -6,7 +6,7 @@ jest.mock('../../hooks/useFileLimits', () => ({
   useFileLimits: () => ({
     maxSize: 50 * 1024 * 1024, // 50MB
     maxPages: 0, // No page limit
-    allowedTypes: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
+    allowedTypes: ['pdf', 'jpg', 'jpeg', 'png'], // File extensions from environment
   }),
 }));
 

@@ -37,8 +37,8 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
         const getFileExtension = (mimeType: string): string | null => {
           const mimeToExtension: Record<string, string> = {
             'application/pdf': 'pdf',
-            'image/jpeg': 'jpeg',
-            'image/jpg': 'jpg',
+            'image/jpeg': 'jpg', // JPEG files should map to 'jpg' extension
+            'image/jpg': 'jpg', // Some browsers might use this
             'image/png': 'png',
           };
           return mimeToExtension[mimeType.toLowerCase()] || null;
