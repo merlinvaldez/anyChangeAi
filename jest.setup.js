@@ -5,6 +5,9 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Polyfill fetch for testing environment
+global.fetch = jest.fn();
+
 // Setup test environment variables
 process.env.NODE_ENV = 'test';
 process.env.API_SECRET_KEY = 'test-secret-key';

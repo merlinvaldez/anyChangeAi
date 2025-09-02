@@ -44,9 +44,32 @@ describe('Home Page', () => {
   });
 
   // Test 5: Check if file format information is displayed
-  test('displays supported file formats', () => {
+  test('displays supported file formats', async () => {
+    // Mock the fetch call to return predictable file limits
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          limits: {
+            maxFileSize: 52428800, // 50MB
+            maxPages: 1,
+            allowedTypes: [
+              'application/pdf',
+              'image/jpeg',
+              'image/jpg',
+              'image/png',
+            ],
+          },
+        }),
+    });
+
     render(<Home />);
-    const formatInfo = screen.getByText(/supports pdf, jpg, png/i);
+
+    // Wait for the component to load the file limits
+    const formatInfo = await screen.findByText(
+      /supports.*pdf.*jpeg.*jpg.*png/i
+    );
     expect(formatInfo).toBeInTheDocument();
   });
 
