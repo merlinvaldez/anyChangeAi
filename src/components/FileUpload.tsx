@@ -1,23 +1,68 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useFileLimits } from '@/hooks/useFileLimits';
 
 interface FileUploadProps {
   onFileSelect: (files: File[]) => void;
   maxFiles?: number;
-  maxSize?: number; // in bytes
-  acceptedTypes?: string[];
 }
 
-export function FileUpload({
-  onFileSelect,
-  maxFiles = 1,
-  maxSize = 50 * 1024 * 1024, // 50MB default
-  acceptedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
-}: FileUploadProps) {
+export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+
+  // Fetch file limits from API configuration
+  const fileLimits = useFileLimits();
+
+  // Validate and process selected files
+  const handleFileSelection = useCallback(
+    (files: File[]) => {
+      if (!fileLimits) return; // Wait for config to load
+
+      const newErrors: string[] = [];
+      const validFiles: File[] = [];
+
+      // Check file count
+      if (files.length > maxFiles) {
+        newErrors.push(
+          `Maximum ${maxFiles} ${maxFiles === 1 ? 'file' : 'files'} allowed`
+        );
+      }
+
+      // Validate each file (even if there are too many, so users see all issues)
+      files.forEach(file => {
+        // Check file type
+        if (!fileLimits.allowedTypes.includes(file.type)) {
+          newErrors.push(`${file.name}: File type not supported`);
+          return;
+        }
+
+        // Check file size
+        if (file.size > fileLimits.maxSize) {
+          const maxSizeMB = Math.round(fileLimits.maxSize / (1024 * 1024));
+          newErrors.push(
+            `${file.name}: File size exceeds ${maxSizeMB}MB limit`
+          );
+          return;
+        }
+
+        // Only add to valid files if we haven't exceeded the count limit
+        if (files.length <= maxFiles) {
+          validFiles.push(file);
+        }
+      });
+
+      setErrors(newErrors);
+
+      if (validFiles.length > 0) {
+        setSelectedFiles(validFiles);
+        onFileSelect(validFiles);
+      }
+    },
+    [fileLimits, maxFiles, onFileSelect]
+  );
 
   // Handle drag events
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -32,21 +77,26 @@ export function FileUpload({
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    handleFileSelection(files);
-  }, []);
+      const files = Array.from(e.dataTransfer.files);
+      handleFileSelection(files);
+    },
+    [handleFileSelection]
+  );
 
   // Handle file input click
   const handleClick = () => {
+    if (!fileLimits) return; // Wait for config to load
+
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = maxFiles > 1;
-    input.accept = acceptedTypes.join(',');
+    input.accept = fileLimits.allowedTypes.join(',');
     input.onchange = e => {
       const target = e.target as HTMLInputElement;
       if (target.files) {
@@ -55,45 +105,6 @@ export function FileUpload({
       }
     };
     input.click();
-  };
-
-  // Validate and process selected files
-  const handleFileSelection = (files: File[]) => {
-    const newErrors: string[] = [];
-    const validFiles: File[] = [];
-
-    // Check file count
-    if (files.length > maxFiles) {
-      newErrors.push(
-        `Maximum ${maxFiles} ${maxFiles === 1 ? 'file' : 'files'} allowed`
-      );
-      return;
-    }
-
-    // Validate each file
-    files.forEach(file => {
-      // Check file type
-      if (!acceptedTypes.includes(file.type)) {
-        newErrors.push(`${file.name}: File type not supported`);
-        return;
-      }
-
-      // Check file size
-      if (file.size > maxSize) {
-        const maxSizeMB = Math.round(maxSize / (1024 * 1024));
-        newErrors.push(`${file.name}: File size exceeds ${maxSizeMB}MB limit`);
-        return;
-      }
-
-      validFiles.push(file);
-    });
-
-    setErrors(newErrors);
-
-    if (validFiles.length > 0) {
-      setSelectedFiles(validFiles);
-      onFileSelect(validFiles);
-    }
   };
 
   // We'll add the drag and drop logic here step by step
@@ -122,8 +133,18 @@ export function FileUpload({
           or click to browse files
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-500">
-          Supports PDF, JPG, PNG • Max 50MB • Up to{' '}
-          {maxFiles === 1 ? 'file' : 'files'}
+          {fileLimits ? (
+            <>
+              Supports{' '}
+              {fileLimits.allowedTypes
+                .map(type => type.split('/')[1].toUpperCase())
+                .join(', ')}{' '}
+              • Max {Math.round(fileLimits.maxSize / (1024 * 1024))}MB • Up to{' '}
+              {maxFiles} {maxFiles === 1 ? 'file' : 'files'}
+            </>
+          ) : (
+            'Loading file requirements...'
+          )}
         </p>
       </div>
 
