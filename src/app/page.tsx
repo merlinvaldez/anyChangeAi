@@ -3,11 +3,22 @@
 import { EnvironmentStatus } from '@/components/EnvironmentStatus';
 import { HealthStatus } from '@/components/HealthStatus';
 import { FileUpload } from '@/components/FileUpload';
+import { useFileUpload } from '@/hooks/useFileUpload';
 
 export default function Home() {
+  const {
+    uploadFiles,
+    isUploading,
+    progress,
+    error,
+    uploadedFiles,
+    clearError,
+  } = useFileUpload();
+
   const handleFileSelect = (files: File[]) => {
     console.log('Files selected:', files);
-    // TODO: Process the files - this is where we'll add OCR logic later
+    // Start the upload process
+    uploadFiles(files);
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
@@ -112,6 +123,81 @@ export default function Home() {
 
         {/* Upload Area */}
         <FileUpload onFileSelect={handleFileSelect} />
+
+        {/* Upload Progress & Status */}
+        {isUploading && (
+          <div className="max-w-2xl mx-auto mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-4">
+                Uploading Files...
+              </h3>
+              <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-3 mb-2">
+                <div
+                  className="bg-blue-600 dark:bg-blue-400 h-3 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className="text-blue-700 dark:text-blue-300 text-sm">
+                {progress}% complete
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Error */}
+        {error && (
+          <div className="max-w-2xl mx-auto mt-8 p-6 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-red-900 dark:text-red-100 mb-2">
+                  Upload Failed
+                </h3>
+                <p className="text-red-700 dark:text-red-300">{error}</p>
+              </div>
+              <button
+                onClick={clearError}
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Success */}
+        {uploadedFiles.length > 0 && !isUploading && (
+          <div className="max-w-2xl mx-auto mt-8 p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+            <h3 className="text-lg font-medium text-green-900 dark:text-green-100 mb-4">
+              ✅ Upload Complete
+            </h3>
+            <div className="space-y-2">
+              {uploadedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-green-100 dark:bg-green-800/30 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-green-600 dark:text-green-400">
+                      📄
+                    </span>
+                    <div>
+                      <p className="text-green-800 dark:text-green-200 font-medium">
+                        {file.originalName}
+                      </p>
+                      <p className="text-green-600 dark:text-green-400 text-sm">
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB • Uploaded{' '}
+                        {new Date(file.uploadedAt).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                    Ready for OCR
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Environment Status (Development Only) */}
         <div className="max-w-4xl mx-auto mt-16">

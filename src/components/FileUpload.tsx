@@ -33,8 +33,23 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
 
       // Validate each file (even if there are too many, so users see all issues)
       files.forEach(file => {
+        // Convert MIME type to extension for comparison
+        const getFileExtension = (mimeType: string): string | null => {
+          const mimeToExtension: Record<string, string> = {
+            'application/pdf': 'pdf',
+            'image/jpeg': 'jpeg',
+            'image/jpg': 'jpg',
+            'image/png': 'png',
+          };
+          return mimeToExtension[mimeType.toLowerCase()] || null;
+        };
+
         // Check file type
-        if (!fileLimits.allowedTypes.includes(file.type)) {
+        const fileExtension = getFileExtension(file.type);
+        if (
+          !fileExtension ||
+          !fileLimits.allowedTypes.includes(fileExtension)
+        ) {
           newErrors.push(`${file.name}: File type not supported`);
           return;
         }
@@ -93,10 +108,25 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
   const handleClick = () => {
     if (!fileLimits) return; // Wait for config to load
 
+    // Convert extensions to MIME types for the file input accept attribute
+    const extensionToMime = (ext: string): string => {
+      const extToMime: Record<string, string> = {
+        pdf: 'application/pdf',
+        jpeg: 'image/jpeg',
+        jpg: 'image/jpeg',
+        png: 'image/png',
+      };
+      return extToMime[ext.toLowerCase()] || '';
+    };
+
+    const acceptedMimeTypes = fileLimits.allowedTypes
+      .map(extensionToMime)
+      .filter(Boolean);
+
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = maxFiles > 1;
-    input.accept = fileLimits.allowedTypes.join(',');
+    input.accept = acceptedMimeTypes.join(',');
     input.onchange = e => {
       const target = e.target as HTMLInputElement;
       if (target.files) {
@@ -137,7 +167,15 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
             <>
               Supports{' '}
               {fileLimits.allowedTypes
-                .map(type => type.split('/')[1].toUpperCase())
+                .map(type => {
+                  // Safely extract file extension from MIME type
+                  const parts = type.split('/');
+                  if (parts.length >= 2 && parts[1]) {
+                    return parts[1].toUpperCase();
+                  }
+                  // Fallback for non-standard formats
+                  return type.toUpperCase();
+                })
                 .join(', ')}{' '}
               • Max {Math.round(fileLimits.maxSize / (1024 * 1024))}MB • Up to{' '}
               {maxFiles} {maxFiles === 1 ? 'file' : 'files'}

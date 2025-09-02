@@ -1,0 +1,11 @@
+This is a test file for testing the direct upload functionality.
+
+It contains some text that we can use to verify that our upload system is working correctly.
+
+Features being tested:
+- Direct upload to Supabase Storage
+- Real-time progress tracking
+- Error handling
+- Success feedback
+
+This file should upload successfully and show progress in real-time!
