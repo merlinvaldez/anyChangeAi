@@ -8,9 +8,17 @@
  * Sensitive server-only data is never exposed to the browser.
  */
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { clientEnv } from '@/lib/env';
 
 export function EnvironmentStatus() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   return (
     <div className="bg-gray-100 border rounded-lg p-4 my-4">
       <h3 className="font-semibold text-lg mb-3">🔧 Environment Status</h3>
@@ -51,9 +59,7 @@ export function EnvironmentStatus() {
           <ul className="space-y-1">
             <li>
               <strong>Browser:</strong>{' '}
-              {typeof window !== 'undefined'
-                ? '✅ Client-side'
-                : '❌ Server-side'}
+              {isClient ? '✅ Client-side' : '⏳ Loading...'}
             </li>
             <li>
               <strong>Development Mode:</strong>{' '}
