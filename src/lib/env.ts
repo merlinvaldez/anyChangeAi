@@ -77,6 +77,10 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_NAME: z.string().default('AnyChange AI'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 
+  // Supabase client-side configuration (safe to expose)
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+
   // Environment indicator (Node.js provides this automatically)
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -112,10 +116,10 @@ const serverEnvSchema = z.object({
   DEBUG_LOGGING: booleanSchema,
 
   // Cloud Services (server-only - contain credentials)
-  AWS_REGION: z.string().optional(),
-  AWS_S3_BUCKET: z.string().optional(),
-  AWS_ACCESS_KEY_ID: z.string().optional(),
-  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().default('documents'),
 
   // Database (server-only - contains credentials)
   DATABASE_URL: z.string().optional(),
@@ -252,11 +256,11 @@ function createServerEnv() {
       logging: rawServerEnv.DEBUG_LOGGING,
     },
 
-    aws: {
-      region: rawServerEnv.AWS_REGION,
-      s3Bucket: rawServerEnv.AWS_S3_BUCKET,
-      accessKeyId: rawServerEnv.AWS_ACCESS_KEY_ID,
-      secretAccessKey: rawServerEnv.AWS_SECRET_ACCESS_KEY,
+    supabase: {
+      url: rawServerEnv.SUPABASE_URL,
+      anonKey: rawServerEnv.SUPABASE_ANON_KEY,
+      serviceRoleKey: rawServerEnv.SUPABASE_SERVICE_ROLE_KEY,
+      storageBucket: rawServerEnv.SUPABASE_STORAGE_BUCKET,
     },
 
     database: {
