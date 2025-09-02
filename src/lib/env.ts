@@ -28,7 +28,6 @@ import { z } from 'zod';
  * Detect if we're running on server or client
  * This is crucial for preventing server-only variables from leaking to browser
  */
-const _isServer = typeof window === 'undefined';
 const isClient = typeof window !== 'undefined';
 
 // =============================================================================
@@ -105,8 +104,8 @@ const serverEnvSchema = z.object({
   MISTRAL_API_URL: z.string().url().default('https://api.mistral.ai/v1'),
 
   // File Processing Limits (server-only - security policy)
-  MAX_FILE_SIZE: numberSchema(10485760), // 10MB default
-  MAX_PAGES: numberSchema(10),
+  MAX_FILE_SIZE: numberSchema(52428800), // 50MB default
+  MAX_PAGES: numberSchema(0), // 0 = no page limit
   ALLOWED_FILE_TYPES: csvSchema('pdf,jpg,jpeg,png'),
 
   // Development Settings (server-only)
