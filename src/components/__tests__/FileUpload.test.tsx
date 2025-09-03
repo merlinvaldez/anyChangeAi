@@ -17,6 +17,13 @@ const createMockFile = (name: string, size: number, type: string) => {
     value: size,
     writable: false,
   });
+
+  // Add arrayBuffer method for PDF processing
+  Object.defineProperty(file, 'arrayBuffer', {
+    value: jest.fn(() => Promise.resolve(new ArrayBuffer(8))),
+    writable: false,
+  });
+
   return file;
 };
 
