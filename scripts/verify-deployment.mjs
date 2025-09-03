@@ -114,7 +114,7 @@ async function runTests() {
       );
       console.log(`  Max File Size: ${data.limits?.maxFileSize || 'unknown'}`);
     }
-  } catch (error) {
+  } catch {
     console.log('  Could not retrieve environment details');
   }
 

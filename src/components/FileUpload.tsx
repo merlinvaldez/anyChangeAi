@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useFileLimits } from '@/hooks/useFileLimits';
 
 interface FileUploadProps {
@@ -56,7 +57,7 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
 
         // Configure PDF.js worker (only needs to be done once)
         if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+          pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
         }
 
         // Convert File to ArrayBuffer
@@ -365,10 +366,12 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
                 {/* File Preview Thumbnail */}
                 <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                   {preview.isImage && preview.previewUrl ? (
-                    <img
+                    <Image
                       src={preview.previewUrl}
                       alt={`Preview of ${preview.file.name}`}
                       className="w-full h-full object-cover"
+                      width={48}
+                      height={48}
                     />
                   ) : preview.isPdf ? (
                     preview.isLoading ? (
@@ -376,10 +379,12 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
                         ⏳
                       </div>
                     ) : preview.previewUrl ? (
-                      <img
+                      <Image
                         src={preview.previewUrl}
                         alt={`PDF preview of ${preview.file.name}`}
                         className="w-full h-full object-cover"
+                        width={48}
+                        height={48}
                       />
                     ) : preview.error ? (
                       <span
