@@ -15,6 +15,13 @@ const customJestConfig = {
     '**/*.(test|spec).(js|jsx|ts|tsx)',
   ],
   collectCoverageFrom: ['src/**/*.(js|jsx|ts|tsx)', '!src/**/*.d.ts'],
+  // Handle ES modules that Jest can't transform by default
+  transformIgnorePatterns: ['node_modules/(?!(pdfjs-dist)/)'],
+  // Mock modules that cause issues in test environment
+  moduleNameMapper: {
+    '^pdfjs-dist$': '<rootDir>/__mocks__/pdfjs-dist.js',
+    '^pdfjs-dist/(.*)$': '<rootDir>/__mocks__/pdfjs-dist.js',
+  },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

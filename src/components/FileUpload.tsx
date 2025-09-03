@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useFileLimits } from '@/hooks/useFileLimits';
 
 interface FileUploadProps {
@@ -8,13 +9,119 @@ interface FileUploadProps {
   maxFiles?: number;
 }
 
+interface FilePreview {
+  file: File;
+  previewUrl?: string;
+  isImage: boolean;
+  isPdf: boolean;
+  isLoading?: boolean;
+  error?: string;
+}
+
 export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
 
   // Fetch file limits from API configuration
   const fileLimits = useFileLimits();
+
+  // Helper function to create file previews
+  const createFilePreview = useCallback((file: File): FilePreview => {
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+
+    let previewUrl: string | undefined;
+
+    // Create preview URL for images
+    if (isImage) {
+      previewUrl = URL.createObjectURL(file);
+    }
+
+    return {
+      file,
+      previewUrl,
+      isImage,
+      isPdf,
+      isLoading: isPdf, // PDFs start in loading state
+    };
+  }, []);
+
+  // Generate PDF thumbnail from first page
+  const generatePdfThumbnail = useCallback(
+    async (file: File): Promise<string> => {
+      try {
+        // Dynamically import PDF.js only on the client side
+        const pdfjs = await import('pdfjs-dist');
+
+        // Configure PDF.js worker (only needs to be done once)
+        if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+          pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+        }
+
+        // Convert File to ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Load the PDF document
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+        // Get the first page
+        const page = await pdf.getPage(1);
+
+        // Set up canvas for rendering
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          throw new Error('Could not get canvas context');
+        }
+
+        // Calculate scale to fit thumbnail size (48px is our thumbnail size)
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = 48 / Math.max(viewport.width, viewport.height);
+        const scaledViewport = page.getViewport({ scale });
+
+        // Set canvas dimensions
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+
+        // Render the page
+        await page.render({
+          canvasContext: context,
+          viewport: scaledViewport,
+          canvas: canvas,
+        }).promise;
+
+        // Convert canvas to blob and create URL
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(blob => {
+            if (blob) {
+              resolve(URL.createObjectURL(blob));
+            } else {
+              reject(new Error('Failed to create blob from canvas'));
+            }
+          }, 'image/png');
+        });
+      } catch (error) {
+        console.error('Error generating PDF thumbnail:', error);
+        throw error;
+      }
+    },
+    []
+  );
+
+  // Clean up preview URLs when component unmounts or files change
+  useEffect(() => {
+    return () => {
+      // Clean up all preview URLs to prevent memory leaks
+      filePreviews.forEach(preview => {
+        if (preview.previewUrl) {
+          URL.revokeObjectURL(preview.previewUrl);
+        }
+      });
+    };
+  }, [filePreviews]);
 
   // Validate and process selected files
   const handleFileSelection = useCallback(
@@ -73,10 +180,54 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
 
       if (validFiles.length > 0) {
         setSelectedFiles(validFiles);
+
+        // Create previews for valid files
+        const previews = validFiles.map(createFilePreview);
+        setFilePreviews(previews);
+
+        // Generate PDF thumbnails asynchronously
+        validFiles.forEach(async (file, index) => {
+          if (file.type === 'application/pdf') {
+            try {
+              const thumbnailUrl = await generatePdfThumbnail(file);
+
+              // Update the specific preview with the generated thumbnail
+              setFilePreviews(currentPreviews =>
+                currentPreviews.map((preview, i) =>
+                  i === index && preview.isPdf
+                    ? { ...preview, previewUrl: thumbnailUrl, isLoading: false }
+                    : preview
+                )
+              );
+            } catch (error) {
+              console.error('Failed to generate PDF thumbnail:', error);
+
+              // Update preview with error state
+              setFilePreviews(currentPreviews =>
+                currentPreviews.map((preview, i) =>
+                  i === index && preview.isPdf
+                    ? {
+                        ...preview,
+                        isLoading: false,
+                        error: 'Failed to generate preview',
+                      }
+                    : preview
+                )
+              );
+            }
+          }
+        });
+
         onFileSelect(validFiles);
       }
     },
-    [fileLimits, maxFiles, onFileSelect]
+    [
+      fileLimits,
+      maxFiles,
+      onFileSelect,
+      createFilePreview,
+      generatePdfThumbnail,
+    ]
   );
 
   // Handle drag events
@@ -201,32 +352,79 @@ export function FileUpload({ onFileSelect, maxFiles = 1 }: FileUploadProps) {
       )}
 
       {/* Selected Files Preview */}
-      {selectedFiles.length > 0 && (
+      {filePreviews.length > 0 && (
         <div className="mt-4 space-y-2">
           <h4 className="text-gray-800 dark:text-gray-200 font-medium">
             Selected Files:
           </h4>
-          {selectedFiles.map((file, index) => (
+          {filePreviews.map((preview, index) => (
             <div
               key={index}
               className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
             >
               <div className="flex items-center space-x-3">
-                <span className="text-green-600 dark:text-green-400">📄</span>
+                {/* File Preview Thumbnail */}
+                <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  {preview.isImage && preview.previewUrl ? (
+                    <Image
+                      src={preview.previewUrl}
+                      alt={`Preview of ${preview.file.name}`}
+                      className="w-full h-full object-cover"
+                      width={48}
+                      height={48}
+                    />
+                  ) : preview.isPdf ? (
+                    preview.isLoading ? (
+                      <div className="text-blue-500 text-xs animate-pulse">
+                        ⏳
+                      </div>
+                    ) : preview.previewUrl ? (
+                      <Image
+                        src={preview.previewUrl}
+                        alt={`PDF preview of ${preview.file.name}`}
+                        className="w-full h-full object-cover"
+                        width={48}
+                        height={48}
+                      />
+                    ) : preview.error ? (
+                      <span
+                        className="text-red-500 text-lg"
+                        title={preview.error}
+                      >
+                        ❌
+                      </span>
+                    ) : (
+                      <span className="text-red-500 text-lg">📄</span>
+                    )
+                  ) : (
+                    <span className="text-gray-500 text-lg">📎</span>
+                  )}
+                </div>
                 <div>
                   <p className="text-green-800 dark:text-green-300 font-medium">
-                    {file.name}
+                    {preview.file.name}
                   </p>
                   <p className="text-green-600 dark:text-green-400 text-sm">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    {(preview.file.size / (1024 * 1024)).toFixed(2)} MB
                   </p>
                 </div>
               </div>
               <button
                 onClick={e => {
                   e.stopPropagation();
+
+                  // Clean up the preview URL for the removed file
+                  if (filePreviews[index].previewUrl) {
+                    URL.revokeObjectURL(filePreviews[index].previewUrl);
+                  }
+
                   const newFiles = selectedFiles.filter((_, i) => i !== index);
+                  const newPreviews = filePreviews.filter(
+                    (_, i) => i !== index
+                  );
+
                   setSelectedFiles(newFiles);
+                  setFilePreviews(newPreviews);
                   onFileSelect(newFiles);
                 }}
                 className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
